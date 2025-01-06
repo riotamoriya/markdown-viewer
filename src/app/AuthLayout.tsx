@@ -118,11 +118,11 @@ export default function AuthLayout({
     const hashedInput = CryptoJS.SHA256(password).toString();
     
     // 本番環境でも確認できるよう、アラートを使用
-    alert(`
-      Environment: ${process.env.NODE_ENV}
-      Stored hash: ${storedHash}
-      Input hash: ${hashedInput}
-    `);
+    // alert(`
+    //   Environment: ${process.env.NODE_ENV}
+    //   Stored hash: ${storedHash}
+    //   Input hash: ${hashedInput}
+    // `);
   
     if (isLocked) return;
   
