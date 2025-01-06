@@ -4,24 +4,6 @@ import { Container, Row, Col, Card, Button, ListGroup, Modal, Form } from 'react
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import MarkdownPreview from './MarkdownPreview';
 
-// interface CustomDropResult {
-//   draggableId: string;
-//   type: string;
-//   source: {
-//     droppableId: string;
-//     index: number;
-//   };
-//   destination?: {
-//     droppableId: string;
-//     index: number;
-//   } | null;
-//   reason?: 'DROP' | 'CANCEL';
-// }
-
-// interface DraggableStateSnapshot {
-//   isDragging: boolean;
-//   draggingOver: string | null;
-// }
 
 interface Post {
   id: string;
@@ -180,7 +162,11 @@ const AdminLayout = () => {
 
   const DesktopView = () => (
     <Container style={{ maxWidth: '1024px' }} className="px-0">
+
+      
       <Row className="g-0">
+
+        
         {/* 管理パネル (左側) */}
         {showAdminPanel && (
           <Col md={4} className="border-end vh-100 overflow-auto" style={{ backgroundColor: '#f8f9fa' }}>
@@ -196,6 +182,38 @@ const AdminLayout = () => {
                   ←
                 </Button>
               </div>
+
+
+
+      {/* ここに新規作成ボタンを追加 */}
+      <div className="mb-3">
+        <Button 
+          variant="primary" 
+          className="w-100"
+          onClick={() => {
+            const newPost: Post = {
+              id: Date.now().toString(),
+              title: "新しい記事",
+              content: "# 新しい記事\n\n本文を入力してください。",
+              date: new Date().toISOString().split('T')[0]
+            };
+            setPosts([newPost, ...posts]);
+            setSelectedPost(newPost);
+            setEditingPost(newPost);
+            setShowEditModal(true);
+          }}
+        >
+          <div className="d-flex align-items-center justify-content-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            新規作成
+          </div>
+        </Button>
+      </div>
+
+
 
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId="posts">
