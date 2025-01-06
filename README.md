@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Markdown Viewer 実装ドキュメント
 
-## Getting Started
+## プロジェクト概要
+シンプルなMarkdownビューアーアプリケーション。認証機能付きで、PC側で編集、スマートフォンで閲覧が可能。
 
-First, run the development server:
+## 技術スタック
+- Next.js 14
+- React Bootstrap
+- TypeScript
+- react-markdown
+- @hello-pangea/dnd（ドラッグ&ドロップ機能）
 
+## セットアップ手順
+
+### 1. プロジェクト初期化
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx create-next-app@latest markdown-viewer --typescript --tailwind --eslint
+cd markdown-viewer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. 必要なパッケージのインストール
+```bash
+npm install react-bootstrap bootstrap react-markdown @hello-pangea/dnd crypto-js --legacy-peer-deps
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## プロジェクト構造
+```
+app/
+  ├── layout.tsx           // メインレイアウト（サーバーコンポーネント）
+  ├── AuthLayoutWrapper.tsx // Bootstrap用ラッパー（クライアント）
+  ├── AuthLayout.tsx       // 認証レイアウト（クライアント）
+  ├── page.tsx            // メインページ
+  ├── MarkdownPreview.tsx  // Markdownプレビューコンポーネント
+  └── globals.css         // グローバルスタイル
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 主要機能
 
-## Learn More
+### 1. 認証システム
+- パスワードベースの認証
+- 試行回数制限（5回）
+- ロックアウト機能（30分）
+- パスワードのハッシュ化（SHA-256）
+- セッション管理
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Markdown編集機能
+- マークダウンのリアルタイムプレビュー
+- ドラッグ&ドロップによる記事の並び替え
+- 記事の編集・削除機能
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. レスポンシブデザイン
+- PC: 2カラムレイアウト（管理パネル + プレビュー）
+- タブレット/モバイル: シンプルな1カラムビュー
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## セキュリティ設定
 
-## Deploy on Vercel
+### 環境変数の設定
+1. プロジェクトルートに `.env.local` を作成:
+```env
+NEXT_PUBLIC_HASHED_PASSWORD=your-hashed-password
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. パスワードハッシュの生成スクリプト (`scripts/generate-password-hash.js`):
+```javascript
+const crypto = require('crypto');
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+const password = process.argv[2];
+if (!password) {
+  console.error('使用方法: node generate-password-hash.js YOUR_PASSWORD');
+  process.exit(1);
+}
+
+const hash = crypto.createHash('sha256').update(password).digest('hex');
+console.log('Generated hash:', hash);
+console.log('Add this to your .env.local:');
+console.log(`NEXT_PUBLIC_HASHED_PASSWORD=${hash}`);
+```
+
+## 残りの実装タスク
+
+### Vercelデータベース統合
+- データの永続化
+- Vercel KVまたはPostgresの設定
+- データスキーマの設計
+- CRUD操作の実装
+
+## デプロイ前の確認事項
+1. 環境変数の設定
+   - パスワードハッシュ
+   - データベース接続情報
+
+2. セキュリティチェック
+   - 認証の動作確認
+   - データの永続化確認
+   - エラーハンドリング
+
+3. パフォーマンス最適化
+   - ビルドサイズの確認
+   - レンダリングパフォーマンス
