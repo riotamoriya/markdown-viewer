@@ -7,7 +7,7 @@ import CryptoJS from 'crypto-js'
 // ハッシュ化されたパスワード
 // const HASHED_PASSWORD = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' // 'password'のハッシュ
 // ハッシュ化されたパスワード
-const HASHED_PASSWORD = process.env.NEXT_PUBLIC_HASHED_PASSWORD || ''
+// const HASHED_PASSWORD = process.env.NEXT_PUBLIC_HASHED_PASSWORD || ''
 // 試行制限の設定
 const MAX_ATTEMPTS = 5
 const LOCKOUT_TIME = 30 * 60 * 1000 // 30分
@@ -118,16 +118,27 @@ export default function AuthLayout({
   }, [isLocked, lockoutEndTime])
 
   const handleLogin = (password: string) => {
-    const hashedInput = CryptoJS.SHA256(password).toString()
-
-    if (isLocked) return
-
-    if (hashedInput === HASHED_PASSWORD) {
-      setIsAuthenticated(true)
-      sessionStorage.setItem('isAuthenticated', 'true')
-      localStorage.removeItem('loginAttempts')
-      setError('')
+    const storedHash = process.env.NEXT_PUBLIC_HASHED_PASSWORD || '';
+    const hashedInput = CryptoJS.SHA256(password).toString();
+    
+    // 本番環境でも確認できるよう、アラートを使用
+    alert(`
+      Environment: ${process.env.NODE_ENV}
+      Stored hash: ${storedHash}
+      Input hash: ${hashedInput}
+    `);
+  
+    if (isLocked) return;
+  
+    if (hashedInput === storedHash) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('isAuthenticated', 'true');
+      localStorage.removeItem('loginAttempts');
+      setError('');
     } else {
+      // 認証失敗時にも詳細を表示
+      alert('Authentication failed. Hashes do not match.');
+  
       const newAttempts = attempts + 1
       setAttempts(newAttempts)
       localStorage.setItem('loginAttempts', newAttempts.toString())
@@ -144,6 +155,10 @@ export default function AuthLayout({
     }
   }
 
+
+
+
+  
   const getRemainingTime = () => {
     if (!lockoutEndTime) return ''
     const remaining = Math.ceil((lockoutEndTime - Date.now()) / 1000)
