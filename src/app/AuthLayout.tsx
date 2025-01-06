@@ -4,10 +4,6 @@ import { useState, useEffect } from 'react'
 import { Modal, Form, Button } from 'react-bootstrap'
 import CryptoJS from 'crypto-js'
 
-// ハッシュ化されたパスワード
-// const HASHED_PASSWORD = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' // 'password'のハッシュ
-// ハッシュ化されたパスワード
-// const HASHED_PASSWORD = process.env.NEXT_PUBLIC_HASHED_PASSWORD || ''
 // 試行制限の設定
 const MAX_ATTEMPTS = 5
 const LOCKOUT_TIME = 30 * 60 * 1000 // 30分

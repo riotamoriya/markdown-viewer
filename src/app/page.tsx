@@ -159,6 +159,24 @@ const AdminLayout = () => {
       </Modal.Footer>
     </Modal>
   );
+  const MobileView = () => (
+    <Container className="py-3">
+      <div className="space-y-2">
+        {posts.map(post => (
+          <Card key={post.id} className="mb-3">
+            <Card.Body>
+              {/* <Card.Title>{post.title}</Card.Title> */}
+              {/* <Card.Subtitle className="mb-2 text-muted">{post.date}</Card.Subtitle> */}
+              <div className="markdown-preview">
+                <MarkdownPreview content={post.content} />
+              </div>
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
+    </Container>
+  );
+
 
   const DesktopView = () => (
     <Container style={{ maxWidth: '1024px' }} className="px-0">
@@ -338,7 +356,16 @@ const AdminLayout = () => {
     </Container>
   );
 
-  return <DesktopView />;
+  return (
+    <>
+      <div className="d-block d-lg-none">
+        <MobileView />
+      </div>
+      <div className="d-none d-lg-block">
+        <DesktopView />
+      </div>
+    </>
+  );
 };
 
 export default AdminLayout;
