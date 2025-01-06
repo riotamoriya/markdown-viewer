@@ -1,101 +1,326 @@
-import Image from "next/image";
+"use client"
+import { useState } from 'react';
+import { Container, Row, Col, Card, Button, ListGroup, Modal, Form } from 'react-bootstrap';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import MarkdownPreview from './MarkdownPreview';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+// interface CustomDropResult {
+//   draggableId: string;
+//   type: string;
+//   source: {
+//     droppableId: string;
+//     index: number;
+//   };
+//   destination?: {
+//     droppableId: string;
+//     index: number;
+//   } | null;
+//   reason?: 'DROP' | 'CANCEL';
+// }
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+// interface DraggableStateSnapshot {
+//   isDragging: boolean;
+//   draggingOver: string | null;
+// }
+
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
 }
+
+// SVGアイコンコンポーネント
+const Icons = {
+  Edit: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  ),
+  Delete: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+    </svg>
+  ),
+  Drag: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="9" cy="12" r="1" fill="currentColor" />
+      <circle cx="15" cy="12" r="1" fill="currentColor" />
+      <circle cx="9" cy="6" r="1" fill="currentColor" />
+      <circle cx="15" cy="6" r="1" fill="currentColor" />
+      <circle cx="9" cy="18" r="1" fill="currentColor" />
+      <circle cx="15" cy="18" r="1" fill="currentColor" />
+    </svg>
+  )
+};
+
+const AdminLayout = () => {
+  const [showAdminPanel, setShowAdminPanel] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([
+    { id: '1', title: "最初の投稿", content: "# 最初の投稿\nこれは最初の投稿です。", date: "2025-01-06" },
+    { id: '2', title: "2番目の投稿", content: "# 2番目の投稿\nこれは2番目の投稿です。", date: "2025-01-06" },
+  ]);
+  const [selectedPost, setSelectedPost] = useState<Post>(posts[0]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [isPreview, setIsPreview] = useState(false);
+
+  // ドラッグ&ドロップの処理
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(posts);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setPosts(items);
+  };
+
+  // 編集モーダル
+  const EditModal = () => {
+    const [editTitle, setEditTitle] = useState(editingPost?.title || '');
+    const [editContent, setEditContent] = useState(editingPost?.content || '');
+    const [showPreview, setShowPreview] = useState(false);
+
+    const handleSave = () => {
+      if (!editingPost) return;
+
+      const updatedPosts = posts.map(post => 
+        post.id === editingPost.id ? 
+        { ...post, title: editTitle, content: editContent } : 
+        post
+      );
+      setPosts(updatedPosts);
+      if (selectedPost.id === editingPost.id) {
+        setSelectedPost({ ...selectedPost, title: editTitle, content: editContent });
+      }
+      setShowEditModal(false);
+    };
+
+    return (
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>記事を編集</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>タイトル</Form.Label>
+              <Form.Control
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>内容</Form.Label>
+              <div className="d-flex justify-content-end mb-2">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => setShowPreview(!showPreview)}
+                >
+                  {showPreview ? '編集' : 'プレビュー'}
+                </Button>
+              </div>
+              {showPreview ? (
+                <div className="border rounded p-3">
+                  <MarkdownPreview content={editContent} />
+                </div>
+              ) : (
+                <Form.Control
+                  as="textarea"
+                  rows={10}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="font-monospace"
+                />
+              )}
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            キャンセル
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            保存
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  // 削除確認モーダル
+  const DeleteModal = () => (
+    <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>削除の確認</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        本当にこの記事を削除しますか？
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+          キャンセル
+        </Button>
+        <Button variant="danger" onClick={() => {
+          if (!editingPost) return;
+          setPosts(posts.filter(post => post.id !== editingPost.id));
+          if (selectedPost.id === editingPost.id) {
+            setSelectedPost(posts[0]);
+          }
+          setShowDeleteModal(false);
+        }}>
+          削除
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+
+  const DesktopView = () => (
+    <Container style={{ maxWidth: '1024px' }} className="px-0">
+      <Row className="g-0">
+        {/* 管理パネル (左側) */}
+        {showAdminPanel && (
+          <Col md={4} className="border-end vh-100 overflow-auto" style={{ backgroundColor: '#f8f9fa' }}>
+            <div className="p-2">
+              <div className="d-flex justify-content-between align-items-center mb-3 px-2">
+                <h2 className="h5 mb-0">管理パネル</h2>
+                <Button 
+                  variant="link" 
+                  size="sm"
+                  className="p-0 text-secondary"
+                  onClick={() => setShowAdminPanel(false)}
+                >
+                  ←
+                </Button>
+              </div>
+
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="posts">
+                  {(provided) => (
+                    <ListGroup
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      variant="flush"
+                    >
+                      {posts.map((post, index) => (
+                        <Draggable 
+                          key={post.id} 
+                          draggableId={post.id} 
+                          index={index}
+                        >
+                          {(provided, snapshot) => (
+                            <ListGroup.Item
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`py-2 px-2 ${snapshot.isDragging ? 'bg-light' : ''} ${selectedPost?.id === post.id ? 'bg-light' : ''}`}
+                              onClick={() => setSelectedPost(post)}
+                              style={{
+                                ...provided.draggableProps.style,
+                                borderLeft: 'none',
+                                borderRight: 'none',
+                                borderTop: 'none',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <div className="d-flex align-items-center gap-2">
+                                <div className="text-secondary">
+                                  <Icons.Drag />
+                                </div>
+                                <div className="flex-grow-1">
+                                  <div className="fw-medium">{post.title}</div>
+                                  <small className="text-muted">{post.date}</small>
+                                </div>
+                                <div className="d-flex gap-1">
+                                  <Button 
+                                    variant="link" 
+                                    size="sm" 
+                                    className="p-1 text-secondary"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingPost(post);
+                                      setShowEditModal(true);
+                                    }}
+                                  >
+                                    <Icons.Edit />
+                                  </Button>
+                                  <Button 
+                                    variant="link" 
+                                    size="sm" 
+                                    className="p-1 text-danger"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingPost(post);
+                                      setShowDeleteModal(true);
+                                    }}
+                                  >
+                                    <Icons.Delete />
+                                  </Button>
+                                </div>
+                              </div>
+                            </ListGroup.Item>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </ListGroup>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </div>
+          </Col>
+        )}
+
+        {/* メインコンテンツ (右側) */}
+        <Col md={showAdminPanel ? 8 : 12}>
+          {!showAdminPanel && (
+            <Button
+              variant="link"
+              className="position-fixed top-0 start-0 m-2 text-secondary"
+              onClick={() => setShowAdminPanel(true)}
+            >
+              →
+            </Button>
+          )}
+          <div className="p-3">
+            {selectedPost && (
+              <Card className="shadow-sm">
+                <Card.Header className="d-flex justify-content-between align-items-center bg-white">
+                  <div>
+                    <h2 className="h5 mb-0">{selectedPost.title}</h2>
+                    <small className="text-muted">{selectedPost.date}</small>
+                  </div>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setIsPreview(!isPreview)}
+                  >
+                    {isPreview ? 'Markdown' : 'プレビュー'}
+                  </Button>
+                </Card.Header>
+                <Card.Body>
+                  {isPreview ? (
+                    <MarkdownPreview content={selectedPost.content} />
+                  ) : (
+                    <pre className="mb-0 font-monospace" style={{ whiteSpace: 'pre-wrap' }}>
+                      {selectedPost.content}
+                    </pre>
+                  )}
+                </Card.Body>
+              </Card>
+            )}
+          </div>
+        </Col>
+      </Row>
+      <EditModal />
+      <DeleteModal />
+    </Container>
+  );
+
+  return <DesktopView />;
+};
+
+export default AdminLayout;
